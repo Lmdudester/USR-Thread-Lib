@@ -24,8 +24,16 @@ typedef uint my_pthread_t;
 
 typedef struct threadControlBlock {
 	/* add something here */
-  struct timeval  start; // When the thread was created
+  struct timeval start; // When the thread was created
   int stat; // Current status of the thread
+  /*
+  0 - ERROR
+  1 - New
+  2 - working
+  3 - yielding
+  4 - terminated
+  5 - erased //Do we really need this?
+  */
   int secQ; // Seconds (Quanta) to be run next time
   ucontext_t ctxt; // Contains all context info for thread
 } tcb;

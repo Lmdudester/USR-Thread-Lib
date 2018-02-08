@@ -2,9 +2,10 @@
 // Author:	Yujie REN
 // Date:	09/23/2017
 
-// name:
-// username of iLab:
-// iLab Server: 
+// name: 							Liam Davies,	Kevin Lee
+// username of iLab: 	lmd312,				kjl156
+// iLab Server: factory
+
 #ifndef MY_PTHREAD_T_H
 #define MY_PTHREAD_T_H
 
@@ -16,12 +17,18 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ucontext.h>
+#include <sys/time.h>
 
 typedef uint my_pthread_t;
 
 typedef struct threadControlBlock {
 	/* add something here */
-} tcb; 
+  struct timeval  start; // When the thread was created
+  int stat; // Current status of the thread
+  int secQ; // Seconds (Quanta) to be run next time
+  ucontext_t ctxt; // Contains all context info for thread
+} tcb;
 
 /* mutex struct definition */
 typedef struct my_pthread_mutex_t {

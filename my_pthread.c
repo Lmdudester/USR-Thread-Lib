@@ -2,9 +2,9 @@
 // Author:	Yujie REN
 // Date:	09/23/2017
 
-// name:
-// username of iLab:
-// iLab Server:
+// name: 							Liam Davies,	Kevin Lee
+// username of iLab: 	lmd312,				kjl156
+// iLab Server: factory
 
 #include "my_pthread_t.h"
 
@@ -46,4 +46,3 @@ int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
 int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
 	return 0;
 };
-

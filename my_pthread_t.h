@@ -26,6 +26,8 @@
 #define P_YIELDING 3
 #define P_TERMINATED 4
 
+#define I_QUANTA 25
+
 typedef uint my_pthread_t;
 
 // tcb struct definition

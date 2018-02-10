@@ -55,10 +55,10 @@ tcbNode * ready;
 tcbNode * waiting;
 
 // Data for main
-tcb * main = NULL;
+tcb * mainTCB;
 
 // For threadID generation
-my_pthread_t idCount = 0;
+my_pthread_t idCount;
 
 /* Function Declarations: */
 

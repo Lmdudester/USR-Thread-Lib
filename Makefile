@@ -13,5 +13,8 @@ my_pthread.a: my_pthread.o
 my_pthread.o: my_pthread_t.h
 	$(CC) -pthread $(CFLAGS) my_pthread.c
 
+p_thread_test.c: my_pthread.o
+	$(CC) p_thread_test.c my_pthread.o
+
 clean:
-	rm -rf testfile *.o *.a
+	rm -rf testfile *.o *.a *.out

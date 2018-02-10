@@ -8,23 +8,29 @@
 
 #include "my_pthread_t.h"
 
+// Data for main
+tcb * mainTCB = NULL;
+
+// For threadID generation
+my_pthread_t idCount = 0;
+
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
 	// First time being called, store main's current context
-	if(main == NULL){
-		main = malloc(sizeof(tcb));
-		if(main == NULL){
+	if(mainTCB == NULL){
+		mainTCB = malloc(sizeof(tcb));
+		if(mainTCB == NULL){
 			//ERROR
 		}
 
 		//Set defaults
-		(*main).tID = __sync_fetch_and_add(&idCount, 1); //Fetch and increment idCounter atomically
-		gettimeofday(&(*main).start, NULL);
-		(*main).stat = P_WORKING;
-		(*main).secQ = 25;
+		(*mainTCB).tID = __sync_fetch_and_add(&idCount, 1); //Fetch and increment idCounter atomically
+		gettimeofday(&(*mainTCB).start, NULL);
+		(*mainTCB).stat = P_WORKING;
+		(*mainTCB).secQ = 25;
 
 		//Create ucontext
-		getcontext(&(*main).ctxt);
+		getcontext(&(*mainTCB).ctxt);
 	}
 
 	// Reguardless, create new thread and add to running list

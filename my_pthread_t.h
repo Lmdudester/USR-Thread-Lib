@@ -22,23 +22,29 @@
 
 typedef uint my_pthread_t;
 
+// tcb struct definition
 typedef struct threadControlBlock {
-	/* add something here */
-  struct timeval  start; // When the thread was created
+  unsigned int tID; // Identification for the thread
+  ucontext_t ctxt; // Contains all context info for thread
+  struct timeval start; // When the thread was created
   int stat; // Current status of the thread
   int secQ; // Seconds (Quanta) to be run next time
-  ucontext_t ctxt; // Contains all context info for thread
 } tcb;
 
-/* mutex struct definition */
+// mutex struct definition
 typedef struct my_pthread_mutex_t {
 	/* add something here */
 } my_pthread_mutex_t;
 
-/* define your data structures here: */
+// tcb Node definition
+typedef struct threadControlBlockNode {
+  tcb data;
+  struct threadControlBlockNode * next;
+} tcbNode;
 
-// Feel free to add your own auxiliary data structures
-
+// Queues
+tcbNode ready;
+tcbNode waiting;
 
 /* Function Declarations: */
 

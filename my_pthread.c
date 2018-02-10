@@ -13,26 +13,44 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 	// First time being called, store main's current context
 	if(main == NULL){
 		main = malloc(sizeof(tcb));
+		if(main == NULL){
+			//ERROR
+		}
 
 		//Set defaults
 		(*main).tID = __sync_fetch_and_add(&idCount, 1); //Fetch and increment idCounter atomically
 		gettimeofday(&(*main).start, NULL);
 		(*main).stat = P_WORKING;
-		(*main).secQ = I_QUANTA;
+		(*main).secQ = 25;
 
 		//Create ucontext
 		getcontext(&(*main).ctxt);
 	}
 
 	// Reguardless, create new thread and add to running list
-	tcb *newThread = malloc(sizeof(tcb));
+	tcbNode * newNode = malloc(sizeof(tcbNode));
 
-	(*newThread).tID = __sync_fetch_and_add(&idCount, 1);
-	gettimeofday(&(*main).start,NULL);
-	(*newThread).stat = P_NEW;
-	(*newThread).secQ = I_QUANTA;
+	(*newNode).data.tID = __sync_fetch_and_add(&idCount, 1);
+	gettimeofday(&(*newNode).data.start,NULL);
+	(*newNode).data.stat = P_NEW;
+	(*newNode).data.secQ = 25;
 
 	//Create ucontext
+	getcontext(&(*newNode).data.ctxt);
+	(*newNode).data.ctxt.uc_link = 0;
+ 	(*newNode).data.ctxt.uc_stack.ss_sp = malloc(STKSZE);
+ 	(*newNode).data.ctxt.uc_stack.ss_size = STKSZE;
+ 	(*newNode).data.ctxt.uc_stack.ss_flags = 0;
+
+	if((*newNode).data.ctxt.uc_stack.ss_sp == NULL){
+		//ERROR
+	}
+
+	makecontext(&(*newNode).data.ctxt, (void *) function, 1, arg);
+
+	// Place in queue
+	(*newNode).next = ready;
+	ready = newNode;
 
 	return 0;
 };

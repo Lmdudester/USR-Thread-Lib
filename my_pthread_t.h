@@ -26,6 +26,8 @@
 #define P_YIELDING 3
 #define P_TERMINATED 4
 
+#define STKSZE 1024*64
+
 typedef uint my_pthread_t;
 
 // tcb struct definition
@@ -49,8 +51,8 @@ typedef struct threadControlBlockNode {
 } tcbNode;
 
 // Queues
-tcbNode ready;
-tcbNode waiting;
+tcbNode * ready;
+tcbNode * waiting;
 
 // Data for main
 tcb * main = NULL;

@@ -15,29 +15,24 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 		main = malloc(sizeof(tcb));
 
 		//Set defaults
-		(*main).tID = idCount;
+		(*main).tID = __sync_fetch_and_add(&idCount, 1); //Fetch and increment idCounter atomically
 		gettimeofday(&(*main).start, NULL);
 		(*main).stat = P_WORKING;
 		(*main).secQ = I_QUANTA;
 
 		//Create ucontext
-		//Kevin's Shit
-		getcontext(&main->ctxt);
-		//End of Kevin's Shit
-
-		idCount ++; //increment id generation int
+		getcontext(&(*main).ctxt);
 	}
 
-	//Kevin's Shit
+	// Reguardless, create new thread and add to running list
 	tcb *newThread = malloc(sizeof(tcb));
 
-	(*newThread).tID = *thread;
+	(*newThread).tID = __sync_fetch_and_add(&idCount, 1);
 	gettimeofday(&(*main).start,NULL);
 	(*newThread).stat = P_NEW;
 	(*newThread).secQ = I_QUANTA;
 
-	// (*tcb).ctxt =
-	//End of Kevin's Shit
+	//Create ucontext
 
 	return 0;
 };

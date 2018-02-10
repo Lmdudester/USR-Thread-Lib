@@ -20,16 +20,13 @@
 #include <ucontext.h>
 #include <sys/time.h>
 
-typedef uint my_pthread_t;
+#define P_ERROR 0
+#define P_NEW 1
+#define P_WORKING 2
+#define P_YIELDING 3
+#define P_TERMINATED 4
 
-/*
-0 - ERROR
-1 - New
-2 - working
-3 - yielding
-4 - terminated
-5 - erased //Do we really need this?
-*/
+typedef uint my_pthread_t;
 
 // tcb struct definition
 typedef struct threadControlBlock {
@@ -54,6 +51,12 @@ typedef struct threadControlBlockNode {
 // Queues
 tcbNode ready;
 tcbNode waiting;
+
+// Data for main
+tcb * main = NULL;
+
+// For threadID generation
+my_pthread_t idCount = 0;
 
 /* Function Declarations: */
 

@@ -10,6 +10,21 @@
 
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
+	// First time being called, store main's current context
+	if(main == NULL){
+		main = malloc(sizeof(tcb));
+
+		//Set defaults
+		(*main).tID = idCount;
+		gettimeofday(&(*main).start, NULL);
+		(*main).stat = P_WORKING;
+		(*main).secQ = 25;
+
+		//Create ucontext
+
+
+		idCount ++; //increment id generation int
+	}
 
 	// getcontext(&(thread->ctxt)); //wait, nm... my_pthread_create is a uint
 	// do uc_stack.ss_sp  uc_stack.ss_size uc_stack.uc_link

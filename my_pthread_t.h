@@ -54,7 +54,7 @@ typedef struct threadControlBlockNode {
 // Scheduling Variables
 tcbNode * ready;
 tcbNode * waiting;
-tcbNode * finsihed;
+tcbNode * finished;
 
 // The currently running context
 tcbNode * currCtxt;

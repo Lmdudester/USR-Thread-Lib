@@ -72,17 +72,38 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 
 /* give CPU pocession to other user level threads voluntarily */
 int my_pthread_yield() {
+	if (currCtxt == NULL) {		//Not there
+		printf("Didn't initalize anything, thus cannot yield");
+		return;
+	}
+
+	(*currCtxt).data.stat = P_YIELDING;
 	return 0;
 };
 
 /* terminate a thread */
 void my_pthread_exit(void *value_ptr) {
-	// use swapcontext to the main <function>?
-	// free the exited thread
+	if (currCtxt == NULL) {		//Not there
+		printf("Didn't initalize anything, thus cannot exit");
+		return;
+	}
+
+	(*currCtxt).data.stat = P_TERMINATED;
+	(*currCtxt).data.ret = value_ptr;
+
+	(*currCtxt).next = finished;
+	finished = currCtxt;
 };
 
 /* wait for thread termination */
 int my_pthread_join(my_pthread_t thread, void **value_ptr) {
+	//Here, you'll free the ss_sp within uc_stack
+	if (currCtxt == NULL) {		//Not there
+		printf("Didn't initalize anything, thus cannot join");
+		return;
+	}
+
+	(*currCtxt).data.ret = value_ptr;
 	return 0;
 };
 

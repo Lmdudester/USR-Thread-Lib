@@ -1,0 +1,24 @@
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ucontext.h>
+#include <sys/time.h>
+
+#include "my_pthread.c"
+
+void * func1(void * arg){
+  printf("I'm function 1");
+}
+
+void func2(){
+  printf("I'm function 2");
+}
+
+int main(int argc, char *argv[]){
+  pthread_attr_t attr;
+  struct thread_info *tinfo;
+  int x = my_pthread_create(0,&attr,&func1,&tinfo);
+  return 0;
+}

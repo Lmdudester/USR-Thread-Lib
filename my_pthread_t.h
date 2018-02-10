@@ -22,9 +22,18 @@
 
 typedef uint my_pthread_t;
 
+/*
+0 - ERROR
+1 - New
+2 - working
+3 - yielding
+4 - terminated
+5 - erased //Do we really need this?
+*/
+
 // tcb struct definition
 typedef struct threadControlBlock {
-  unsigned int tID; // Identification for the thread
+  my_pthread_t tID; // Identification for the thread
   ucontext_t ctxt; // Contains all context info for thread
   struct timeval start; // When the thread was created
   int stat; // Current status of the thread

@@ -9,28 +9,34 @@
 #include "my_pthread_t.h"
 
 // Data for main
-tcb * mainTCB = NULL;
+tcbNode * mainTCB = NULL;
 
 // For threadID generation
 my_pthread_t idCount = 0;
+
+tcbNode * currCtxt = NULL;
 
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
 	// First time being called, store main's current context
 	if(mainTCB == NULL){
-		mainTCB = malloc(sizeof(tcb));
+		mainTCB = malloc(sizeof(tcbNode));
 		if(mainTCB == NULL){
 			//ERROR
 		}
 
 		//Set defaults
-		(*mainTCB).tID = __sync_fetch_and_add(&idCount, 1); //Fetch and increment idCounter atomically
-		gettimeofday(&(*mainTCB).start, NULL);
-		(*mainTCB).stat = P_WORKING;
-		(*mainTCB).secQ = 25;
+		(*mainTCB).data.tID = __sync_fetch_and_add(&idCount, 1); //Fetch and increment idCounter atomically
+		gettimeofday(&(*mainTCB).data.start, NULL);
+		(*mainTCB).data.stat = P_WORKING;
+		(*mainTCB).data.secQ = 25;
+		(*mainTCB).data.ret = NULL;
 
 		//Create ucontext
-		getcontext(&(*mainTCB).ctxt);
+		getcontext(&(*mainTCB).data.ctxt);
+
+		//Set default currCtxt
+		currCtxt = mainTCB;
 	}
 
 	// Reguardless, create new thread and add to running list
@@ -40,6 +46,7 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 	gettimeofday(&(*newNode).data.start,NULL);
 	(*newNode).data.stat = P_NEW;
 	(*newNode).data.secQ = 25;
+	(*newNode).data.ret = NULL;
 
 	//Create ucontext
 	getcontext(&(*newNode).data.ctxt);
@@ -57,6 +64,8 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 	// Place in queue
 	(*newNode).next = ready;
 	ready = newNode;
+
+	(*thread) = (*newNode).data.tID;
 
 	return 0;
 };

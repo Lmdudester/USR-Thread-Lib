@@ -37,6 +37,7 @@ typedef struct threadControlBlock {
   struct timeval start; // When the thread was created
   int stat; // Current status of the thread
   int secQ; // Seconds (Quanta) to be run next time
+  void * ret; // Pointer to return value
 } tcb;
 
 // mutex struct definition
@@ -50,12 +51,16 @@ typedef struct threadControlBlockNode {
   struct threadControlBlockNode * next;
 } tcbNode;
 
-// Queues
+// Scheduling Variables
 tcbNode * ready;
 tcbNode * waiting;
+tcbNode * finsihed;
+
+// The currently running context
+tcbNode * currCtxt;
 
 // Data for main
-tcb * mainTCB;
+tcbNode * mainTCB;
 
 // For threadID generation
 my_pthread_t idCount;

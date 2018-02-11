@@ -8,13 +8,21 @@
 
 #include "my_pthread_t.h"
 
+
+// Scheduling Variables
+tcbNode * ready = NULL;
+tcbNode * waiting = NULL;
+tcbNode * finished = NULL;
+
+// The currently running context
+tcbNode * currCtxt = NULL;
+
 // Data for main
 tcbNode * mainTCB = NULL;
 
 // For threadID generation
 my_pthread_t idCount = 0;
 
-tcbNode * currCtxt = NULL;
 
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {

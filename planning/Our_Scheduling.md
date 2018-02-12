@@ -52,7 +52,9 @@ Our scheduler implements a Multi-Level Feedback Queue that uses a maintenance cy
 
   1. Check the top of *Q1* for a process. If none exist, then check *Q2*, then *Q3*. When a process is found, pop it, store the *Q#* it was found in and we can call it **nextProc**.
 
-  2. If **nextProc** was popped from *Q1*, then we will run it for **??** ms. If **nextProc** was popped from *Q2*, then we will run it for **??** ms. If **nextProc** was popped from *Q3*, then we will run it for **??** ms.
+  2. Check the *status* associated with the process. Following the guide above, decide if we are using the process or moving the process.
+
+  3. If **nextProc** was popped from *Q1*, then we will run it for **??** ms. If **nextProc** was popped from *Q2*, then we will run it for **??** ms. If **nextProc** was popped from *Q3*, then we will run it for **??** ms.
 
 *Note:* The process will be swapped in after Maintenance has been run.
 
@@ -64,4 +66,4 @@ Once the scheduler has decided on a process to run:
   2. Call this popped process **mProc**.
   2. Take **mProc** and place it into *Q1*.
 
-This will ensure that the big processes stuck in the lowest queue do not get starved by many smaller ones in the higher *Q#*s.
+This will ensure that the big processes stuck in the lowest queue do not get starved by many smaller ones in the higher *Q#* s.

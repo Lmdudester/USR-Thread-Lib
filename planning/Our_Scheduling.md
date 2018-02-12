@@ -1,7 +1,7 @@
 # Our Multi-Level Feedback Queue Scheduling Plan:
 Our scheduler implements a Multi-Level Feedback Queue that uses a maintenance cycle to prevent starvation.
 ### Our queues - A Visual Guide
-![alt text](MLPQ Graph.png)
+![alt text](MLPQ Graph.png?raw=true)
 
 ## Guide to a Scheduling Cycle
 

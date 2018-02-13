@@ -22,8 +22,9 @@ Our scheduler implements a Multi-Level Feedback Queue that uses a maintenance cy
   * **P_WAIT_M** - The thread is waiting on a mutex
     * *Upon Choosing:*
       * Check to see if the **mutex** it is waiting on is unlocked
-      * If it is unlocked, run this thread. Otherwise, remove it from this *Q#* and place into one *Q#* lower. (If from *Q3*, place back into *Q3*)
+      * If it is unlocked, run this thread. Otherwise, place into the *same* *Q#* from where it was picked.
       * Proceed to check the next thing in the current *Q#*.
+      * Make sure you don't cycle the queue by storing the first node and checking against the number of runs.
     * *Upon Putting Away:*
       * Place into the **same** *Q#* from where it was picked.<br><br>
 
@@ -31,8 +32,9 @@ Our scheduler implements a Multi-Level Feedback Queue that uses a maintenance cy
 
     * *Upon Choosing:*
       * Check to see if the **thread** it is waiting on is in the *completed* linked list
-      * If it is, run this thread. Otherwise, remove it from this *Q#* and place into one *Q#* lower. (If from *Q3*, place back into *Q3*)
+      * If it is, run this thread. Otherwise, place into the *same* *Q#* from where it was picked.
       * Proceed to check the next thing in the current *Q#*.
+      * Make sure you don't cycle the queue by storing the first node and checking against the number of runs.
     * *Upon Putting Away:*
       * Place into the **same** *Q#* from where it was picked.<br><br>
 

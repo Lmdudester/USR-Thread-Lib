@@ -26,8 +26,15 @@
 #define P_WAIT_T 3
 #define P_EXIT 4
 
+#define WHICH ITIMER_REAL
+#define	T_SIG SIGALRM
+
 #define STKSZE 1024*64
 #define MAINTAIN 10
+
+#define Q1_MSECS 25
+#define Q2_MSECS 50
+#define Q3_MSECS 100
 
 typedef uint my_pthread_t;
 

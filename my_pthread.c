@@ -141,8 +141,20 @@ tcbNode * checkQueue(tcbNode ** queue){
 	return nextProc;
 }
 
+/* __checkQueue()__
+ *	Returns a pointer to the next runnable tcbNode in the given queue.
+ *	Args:
+ *		- tcbNode ** queue - a pointer to q1, q2 or q3 (use &q1, &q2, &q3)
+ *	Returns:
+ *		- tcbNode * - the next runnable tcbNode in the given queue
+ *		- NULL - if no runnable nodes exist
+ */
 void scheduler(int signum){
 	/* Set up sigmask */
+	sigset_t toBlock;
+	sigemptyset(&toBlock);
+	sigaddset(&toBlock, T_SIG);
+	sigprocmask(SIG_BLOCK, &toBlock, NULL);
 
 	/* Choose next ctxt */
 	tcbNode * nextProc = checkQueue(&q1); // Queue 1
@@ -152,7 +164,7 @@ void scheduler(int signum){
 		nextProc = checkQueue(&q3); // Queue 3
 
 	if(nextProc == NULL) { // Then currCtxt is the only possible context, so let it continue
-		numMaintain++;
+		numMaintain++;			 // NOTE: No timer set since nothing can run until a yield anyway
 		return;
 	}
 
@@ -201,13 +213,27 @@ void scheduler(int signum){
 		numMaintain = 0;
 	}
 
-	/* Reset Timer */
-
 	/* Prep to Swap contexts */
 	tcbNode * curr_temp = currCtxt; // Make a temp for the old currCtxt (so we can still swap)
 	currCtxt = nextProc;	// Change the currCtxt pointer
 
+	/* Reset Timer */
+	timer.it_interval.tv_sec = 0;	// 0 seconds
+  timer.it_interval.tv_usec = 0; // 0 milliseconds - NO REPEAT
+  timer.it_value.tv_sec = 0; // 0 seconds
+	// (BASED ON Q#) milliseconds
+	if((*currCtxt).data.qNum == 1) // q1
+  	timer.it_value.tv_usec = Q1_MSECS;
+	if((*currCtxt).data.qNum == 2) // q2
+	 	timer.it_value.tv_usec = Q2_MSECS;
+	else // q3
+		timer.it_value.tv_usec = Q3_MSECS;
+
+	setitimer(WHICH, &timer, NULL);
+
 	/* Drop sigmask */
+	sigemptyset(&toBlock);
+	sigprocmask(SIG_BLOCK, &toBlock, NULL);
 
 	/* Swap contexts */
 	swapcontext(&(*curr_temp).data.ctxt, &(*currCtxt).data.ctxt);
@@ -216,9 +242,28 @@ void scheduler(int signum){
 
 /* MAIN FUNCTIONS */
 
+/* give CPU pocession to other user level threads voluntarily */
+int my_pthread_yield() {
+	/* Disable Timer */
+	struct itimerval timer;
+	timer.it_value.tv_sec = 0; // 0 seconds
+  timer.it_value.tv_usec = 0; // 0 milliseconds
+	setitimer(WHICH, &timer, NULL); // CANCEL TIMER
+
+	// Set status to yield - BUT ONLY IF IT WAS RUNNING, not waiting
+	if((*currCtxt).data.stat == P_RUN)
+		(*currCtxt).data.stat = P_YIELD;
+
+	// Call Scheduler
+	raise(T_SIG);
+	return 0;
+};
+
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
 	if(currCtxt == NULL) { // First time any my_pthread function has been evoked (so store main)
+		signal (T_SIG, scheduler);
+
 		currCtxt = malloc(sizeof(tcbNode));
 		if(currCtxt == NULL){
 			//ERROR
@@ -271,17 +316,16 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 	// Place in queue
 	enqueue(&q1, newNode);
 
-	return 0;
-};
+	my_pthread_yield();
 
-/* give CPU pocession to other user level threads voluntarily */
-int my_pthread_yield() {
 	return 0;
 };
 
 /* terminate a thread */
-void my_pthread_exit(void *value_ptr) {
-	return;
+void my_pthread_exit(void * value_ptr) {
+	(*currCtxt).data.stat = P_EXIT; // Set to exit status
+	(*currCtxt).data.ret = value_ptr; // Point to the return value
+	my_pthread_yield(); // Release control
 };
 
 /* wait for thread termination */

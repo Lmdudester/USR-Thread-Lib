@@ -20,30 +20,29 @@
 #include <ucontext.h>
 #include <sys/time.h>
 
-#define P_ERROR 0
-#define P_NEW 1
-#define P_WORKING 2
-#define P_YIELDING 3
-#define P_TERMINATED 4
+#define P_RUN 0
+#define P_YIELD 1
+#define P_WAIT_M 2
+#define P_WAIT_T 3
+#define P_EXIT 4
 
 #define STKSZE 1024*64
 
 typedef uint my_pthread_t;
 
-// tcb struct definition
-typedef struct threadControlBlock {
-  my_pthread_t tID; // Identification for the thread
-  ucontext_t ctxt; // Contains all context info for thread
-  struct timeval start; // When the thread was created
-  int stat; // Current status of the thread
-  int secQ; // Seconds (Quanta) to be run next time
-  void * ret; // Pointer to return value
-} tcb;
-
 // mutex struct definition
 typedef struct my_pthread_mutex_t {
 	/* add something here */
 } my_pthread_mutex_t;
+
+// tcb struct definition
+typedef struct threadControlBlock {
+  my_pthread_t tID; // Identification for the thread
+  ucontext_t ctxt; // Contains all context info for thread
+  int qNum; // The number of the prev queue this thread was in
+  int stat; // Current status of the thread
+  void * ret; // Pointer to return value
+} tcb;
 
 // tcb Node definition
 typedef struct threadControlBlockNode {
@@ -51,16 +50,16 @@ typedef struct threadControlBlockNode {
   struct threadControlBlockNode * next;
 } tcbNode;
 
-// Scheduling Variables
-tcbNode * ready;
-tcbNode * waiting;
+// Queues
+tcbNode * q1;
+tcbNode * q2;
+tcbNode * q3;
+
+// Linked Lists
 tcbNode * finished;
 
 // The currently running context
 tcbNode * currCtxt;
-
-// Data for main
-tcbNode * mainTCB;
 
 // For threadID generation
 my_pthread_t idCount;

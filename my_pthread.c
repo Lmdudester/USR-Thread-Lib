@@ -8,52 +8,90 @@
 
 #include "my_pthread_t.h"
 
+// Queues
+tcbNode * q1 = NULL;
+tcbNode * q2 = NULL;
+tcbNode * q3 = NULL;
 
-// Scheduling Variables
-tcbNode * ready = NULL;
-tcbNode * waiting = NULL;
+// Linked Lists
 tcbNode * finished = NULL;
 
 // The currently running context
 tcbNode * currCtxt = NULL;
 
-// Data for main
-tcbNode * mainTCB = NULL;
-
 // For threadID generation
 my_pthread_t idCount = 0;
 
 
+/* HELPER FUNCTIONS */
+
+void enqueue(tcbNode ** queue, tcbNode * newNode){
+	if(*queue == NULL) { // Its empty
+		(*queue) = newNode;
+		return;
+	}
+
+	// 1-More Items
+	tcbNode * ptr = (*queue);
+	while((*ptr).next != NULL) {
+		ptr = (*ptr).next;
+	}
+	(*ptr).next = newNode;
+}
+
+tcbNode * dequeue(tcbNode ** queue){
+	if(*queue == NULL) // Its empty
+		return NULL;
+
+	tcbNode * ret = *queue;
+	*queue = (**queue).next;
+	return ret;
+}
+
+
+/* SCHEDULER FUNCTIONS */
+
+void scheduler(int signum){
+	// Set up sigmask
+
+	// Decide which queue to send current cTxt to
+
+	// Maintainance + Choose next ctxt
+
+	// Reset Timer
+
+	// Swap contexts
+}
+
+
+/* MAIN FUNCTIONS */
+
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
-	// First time being called, store main's current context
-	if(mainTCB == NULL){
-		mainTCB = malloc(sizeof(tcbNode));
-		if(mainTCB == NULL){
+	if(currCtxt == NULL) { // First time any my_pthread function has been evoked (so store main)
+		currCtxt = malloc(sizeof(tcbNode));
+		if(currCtxt == NULL){
 			//ERROR
+			return -1;
 		}
 
-		//Set defaults
-		(*mainTCB).data.tID = __sync_fetch_and_add(&idCount, 1); //Fetch and increment idCounter atomically
-		gettimeofday(&(*mainTCB).data.start, NULL);
-		(*mainTCB).data.stat = P_WORKING;
-		(*mainTCB).data.secQ = 25;
-		(*mainTCB).data.ret = NULL;
+		// Set defaults
+		(*currCtxt).data.tID = __sync_fetch_and_add(&idCount, 1); //Fetch and increment idCounter atomically
+		(*currCtxt).data.stat = P_RUN;
+		(*currCtxt).data.qNum = 1;
+		(*currCtxt).data.ret = NULL;
 
-		//Create ucontext
-		getcontext(&(*mainTCB).data.ctxt);
-
-		//Set default currCtxt
-		currCtxt = mainTCB;
+		// Create ucontext
+		getcontext(&(*currCtxt).data.ctxt);
 	}
 
 	// Reguardless, create new thread and add to running list
 	tcbNode * newNode = malloc(sizeof(tcbNode));
 
-	(*newNode).data.tID = __sync_fetch_and_add(&idCount, 1);
-	gettimeofday(&(*newNode).data.start,NULL);
-	(*newNode).data.stat = P_NEW;
-	(*newNode).data.secQ = 25;
+	// Set defaults
+	(*newNode).data.tID = __sync_fetch_and_add(&idCount, 1); //Fetch and increment idCounter atomically
+	(*newNode).data.stat = P_RUN;
+	(*newNode).data.qNum = 1;
 	(*newNode).data.ret = NULL;
 
 	//Create ucontext
@@ -65,53 +103,30 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 
 	if((*newNode).data.ctxt.uc_stack.ss_sp == NULL){
 		//ERROR
+		return -1;
 	}
 
 	makecontext(&(*newNode).data.ctxt, (void *) function, 1, arg);
 
 	// Place in queue
-	(*newNode).next = ready;
-	ready = newNode;
-
-	(*thread) = (*newNode).data.tID;
+	enqueue(&q1, newNode);
 
 	return 0;
 };
 
 /* give CPU pocession to other user level threads voluntarily */
 int my_pthread_yield() {
-	if (currCtxt == NULL) {		//Not there
-		printf("Didn't initalize anything, thus cannot yield");
-		return;
-	}
-
-	(*currCtxt).data.stat = P_YIELDING;
 	return 0;
 };
 
 /* terminate a thread */
 void my_pthread_exit(void *value_ptr) {
-	if (currCtxt == NULL) {		//Not there
-		printf("Didn't initalize anything, thus cannot exit");
-		return;
-	}
-
-	(*currCtxt).data.stat = P_TERMINATED;
-	(*currCtxt).data.ret = value_ptr;
-
-	(*currCtxt).next = finished;
-	finished = currCtxt;
+	return;
 };
 
 /* wait for thread termination */
 int my_pthread_join(my_pthread_t thread, void **value_ptr) {
 	//Here, you'll free the ss_sp within uc_stack
-	if (currCtxt == NULL) {		//Not there
-		printf("Didn't initalize anything, thus cannot join");
-		return;
-	}
-
-	(*currCtxt).data.ret = value_ptr;
 	return 0;
 };
 

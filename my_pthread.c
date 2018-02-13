@@ -14,7 +14,7 @@ tcbNode * q2 = NULL;
 tcbNode * q3 = NULL;
 
 // Linked Lists
-tcbNode * finished = NULL;
+tcbNode * completed = NULL;
 
 // The currently running context
 tcbNode * currCtxt = NULL;

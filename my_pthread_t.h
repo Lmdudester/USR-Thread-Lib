@@ -32,13 +32,21 @@ typedef uint my_pthread_t;
 
 // mutex struct definition
 typedef struct my_pthread_mutex_t {
-	/* add something here */
+	int lock;
 } my_pthread_mutex_t;
+
+// mutex node definition
+typedef struct my_pthread_mutex_t_Node {
+	my_pthread_mutex_t lock;
+  struct my_pthread_mutex_t_Node * next;
+} my_pthread_mutex_t_Node;
 
 // tcb struct definition
 typedef struct threadControlBlock {
   my_pthread_t tID; // Identification for the thread
   ucontext_t ctxt; // Contains all context info for thread
+  my_pthread_mutex_t * w_mutex; // The mutex this thread is waiting on
+  my_pthread_t w_tID; // The tid of the thread that this thread is waiting on (NOTE: 0 if none)
   int qNum; // The number of the prev queue this thread was in
   int stat; // Current status of the thread
   void * ret; // Pointer to return value

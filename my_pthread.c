@@ -20,11 +20,20 @@ tcbNode * finished = NULL;
 tcbNode * currCtxt = NULL;
 
 // For threadID generation
-my_pthread_t idCount = 0;
+my_pthread_t idCount = 1;
 
 
 /* HELPER FUNCTIONS */
 
+/* __enqueue()__
+ *	Adds the newly created node to the parameter queue.
+ *	Args:
+ *		- tcbNode ** queue - a pointer to q1, q2 or q3 (use &q1, &q2, &q3)
+ *		- tcbNode * newNode - the node to be inserted
+ *	Returns:
+ *		- N/A
+ * NOTE: Assumes all newNode(s) have had their next ptr set to NULL
+ */
 void enqueue(tcbNode ** queue, tcbNode * newNode){
 	if(*queue == NULL) { // Its empty
 		(*queue) = newNode;
@@ -39,12 +48,21 @@ void enqueue(tcbNode ** queue, tcbNode * newNode){
 	(*ptr).next = newNode;
 }
 
+ /* __dequeue()__
+  *	Returns the top tcbNode from the parameter queue.
+  *	Args:
+  *		- tcbNode ** queue - a pointer to q1, q2 or q3 (use &q1, &q2, &q3)
+  *	Returns:
+  *		- tcbNode * - the top tcbNode
+	* NOTE: To meet NULL requirement of enqueue, returned node has a next of NULL
+  */
 tcbNode * dequeue(tcbNode ** queue){
 	if(*queue == NULL) // Its empty
 		return NULL;
 
 	tcbNode * ret = *queue;
 	*queue = (**queue).next;
+	(*ret).next = NULL;
 	return ret;
 }
 
@@ -74,12 +92,15 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 			//ERROR
 			return -1;
 		}
+		(*currCtxt).next = NULL;
 
 		// Set defaults
 		(*currCtxt).data.tID = __sync_fetch_and_add(&idCount, 1); //Fetch and increment idCounter atomically
 		(*currCtxt).data.stat = P_RUN;
 		(*currCtxt).data.qNum = 1;
 		(*currCtxt).data.ret = NULL;
+		(*currCtxt).data.w_mutex = NULL;
+		(*currCtxt).data.w_tID = 0;
 
 		// Create ucontext
 		getcontext(&(*currCtxt).data.ctxt);
@@ -87,12 +108,19 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 
 	// Reguardless, create new thread and add to running list
 	tcbNode * newNode = malloc(sizeof(tcbNode));
+	if(newNode == NULL){
+		//ERROR
+		return -1;
+	}
+	(*newNode).next = NULL;
 
 	// Set defaults
 	(*newNode).data.tID = __sync_fetch_and_add(&idCount, 1); //Fetch and increment idCounter atomically
 	(*newNode).data.stat = P_RUN;
 	(*newNode).data.qNum = 1;
 	(*newNode).data.ret = NULL;
+	(*newNode).data.w_mutex = NULL;
+	(*newNode).data.w_tID = 0;
 
 	//Create ucontext
 	getcontext(&(*newNode).data.ctxt);

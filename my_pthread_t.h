@@ -27,6 +27,7 @@
 #define P_EXIT 4
 
 #define STKSZE 1024*64
+#define MAINTAIN 10
 
 typedef uint my_pthread_t;
 
@@ -71,6 +72,9 @@ tcbNode * currCtxt;
 
 // For threadID generation
 my_pthread_t idCount;
+
+// For Maintenance Cycle decisions
+int numMaintain;
 
 /* Function Declarations: */
 

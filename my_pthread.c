@@ -22,13 +22,16 @@ tcbNode * currCtxt = NULL;
 // For threadID generation
 my_pthread_t idCount = 1;
 
+// For Maintenance Cycle decisions
+int numMaintain = 0;
+
 
 /* HELPER FUNCTIONS */
 
 /* __enqueue()__
  *	Adds the newly created node to the parameter queue.
  *	Args:
- *		- tcbNode ** queue - a pointer to q1, q2 or q3 (use &q1, &q2, &q3)
+ *		- tcbNode ** queue - a pointer to q1, q2 or q3 (use &q1, &q2, &q3, &completed)
  *		- tcbNode * newNode - the node to be inserted
  *	Returns:
  *		- N/A
@@ -54,6 +57,7 @@ void enqueue(tcbNode ** queue, tcbNode * newNode){
   *		- tcbNode ** queue - a pointer to q1, q2 or q3 (use &q1, &q2, &q3)
   *	Returns:
   *		- tcbNode * - the top tcbNode
+	*		- NULL - if no nodes exist
 	* NOTE: To meet NULL requirement of enqueue, returned node has a next of NULL
   */
 tcbNode * dequeue(tcbNode ** queue){
@@ -69,16 +73,144 @@ tcbNode * dequeue(tcbNode ** queue){
 
 /* SCHEDULER FUNCTIONS */
 
+/* __isThreadDone()__
+ *	Determines if a thread is done based on it's tID
+ *	Args:
+ *		- my_pthread_t id - the tID of the thead in question
+ *	Returns:
+ *		- 0 - thread is not in the "completed" linked list
+ *		- 1 - thread is in the "completed" linked list
+ */
+int isThreadDone(my_pthread_t id){
+	tcbNode * ptr = completed;
+	while(ptr != NULL){
+		if((*ptr).data.tID == id)
+			return 1;
+		ptr = (*ptr).next;
+	}
+	return 0;
+}
+
+/* __checkQueue()__
+ *	Returns a pointer to the next runnable tcbNode in the given queue.
+ *	Args:
+ *		- tcbNode ** queue - a pointer to q1, q2 or q3 (use &q1, &q2, &q3)
+ *	Returns:
+ *		- tcbNode * - the next runnable tcbNode in the given queue
+ *		- NULL - if no runnable nodes exist
+ */
+tcbNode * checkQueue(tcbNode ** queue){
+	tcbNode * nextProc = NULL;
+	tcbNode * front = *queue; // Find the current front so we can see if we cycle
+	int runs = 0;
+
+	while(nextProc == NULL){
+		tcbNode * testProc = dequeue(queue);
+
+		if(front == testProc && runs != 0) // Cycled through the queue
+			break;
+
+		if(testProc == NULL) // Nothing in queue
+			break;
+
+		switch((*testProc).data.stat){
+			case P_RUN: // Set it up to go next
+				nextProc = testProc;
+				break;
+
+			case P_WAIT_M:
+				if(1 == 1) // If it's mutex is unclocked **EDIT LATER**
+					nextProc = testProc;
+				else
+					enqueue(queue,testProc);
+				break;
+
+			case P_WAIT_T:
+				if(isThreadDone((*testProc).data.w_tID) == 1) // If the thread is complete
+					nextProc = testProc;
+				else
+					enqueue(queue,testProc);
+				break;
+
+			default:
+				break;
+		}
+		runs++;
+	}
+
+	return nextProc;
+}
+
 void scheduler(int signum){
-	// Set up sigmask
+	/* Set up sigmask */
 
-	// Decide which queue to send current cTxt to
+	/* Choose next ctxt */
+	tcbNode * nextProc = checkQueue(&q1); // Queue 1
+	if(nextProc == NULL)
+		nextProc = checkQueue(&q2); // Queue 2
+	if(nextProc == NULL)
+		nextProc = checkQueue(&q3); // Queue 3
 
-	// Maintainance + Choose next ctxt
+	if(nextProc == NULL) { // Then currCtxt is the only possible context, so let it continue
+		numMaintain++;
+		return;
+	}
 
-	// Reset Timer
+	/* Decide which queue to send current cTxt to */
+	switch((*currCtxt).data.stat){
+		case P_RUN:
+			if((*currCtxt).data.qNum == 1) {  // Was in q1
+				(*currCtxt).data.qNum = 2;
+				enqueue(&q2, currCtxt);
+			} else	{ // Was in q2 or q3
+				(*currCtxt).data.qNum = 3;
+				enqueue(&q3, currCtxt);
+			}
+			break;
 
-	// Swap contexts
+		case P_YIELD:
+			(*currCtxt).data.stat = P_RUN;
+		case P_WAIT_M:
+		case P_WAIT_T:
+			if((*currCtxt).data.qNum == 1) // Was in q1
+				enqueue(&q1, currCtxt);
+			else if((*currCtxt).data.qNum == 2) // Was in q2
+				enqueue(&q2, currCtxt);
+			else // Was in q3
+				enqueue(&q3, currCtxt);
+			break;
+
+		case P_EXIT:
+			enqueue(&completed, currCtxt);
+			break;
+
+	}
+
+	/* Maintenance */
+	if(numMaintain < MAINTAIN){
+		numMaintain++;
+	} else {
+		numMaintain++;
+		if(q3 != NULL) { // If q3 isn't empty
+			tcbNode * mProc = dequeue(&q3);
+			enqueue(&q1, mProc);
+		} else if(q2 != NULL) { // If q2 isnt empty
+			tcbNode * mProc = dequeue(&q2);
+			enqueue(&q1, mProc);
+		} // Otherwise, do nothing
+		numMaintain = 0;
+	}
+
+	/* Reset Timer */
+
+	/* Prep to Swap contexts */
+	tcbNode * curr_temp = currCtxt; // Make a temp for the old currCtxt (so we can still swap)
+	currCtxt = nextProc;	// Change the currCtxt pointer
+
+	/* Drop sigmask */
+
+	/* Swap contexts */
+	swapcontext(&(*curr_temp).data.ctxt, &(*currCtxt).data.ctxt);
 }
 
 

@@ -41,5 +41,5 @@ void main(int argc, char ** argv){
 	raise(SIGALRM);
 
   printf("Res: %d\n", i);
-  
+
 }

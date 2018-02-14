@@ -28,6 +28,13 @@ int numMaintain = 0;
 
 /* HELPER FUNCTIONS */
 
+void disableTimer(){
+	struct itimerval timer;
+	timer.it_value.tv_sec = 0; // 0 seconds
+  timer.it_value.tv_usec = 0; // 0 milliseconds
+	setitimer(WHICH, &timer, NULL); // CANCEL TIMER
+}
+
 /* __enqueue()__
  *	Adds the newly created node to the parameter queue.
  *	Args:
@@ -70,6 +77,28 @@ tcbNode * dequeue(tcbNode ** queue){
 	return ret;
 }
 
+tcbNode * getExitThread(my_pthread_t id){
+		tcbNode * ptr = completed;
+		tcbNode * prv = NULL;
+
+		while(ptr != NULL) { // Look at each element
+			if((*ptr).data.tID == id)
+				break;
+			prv = ptr;
+			ptr = (*ptr).next;
+		}
+
+		if(ptr == NULL) // It doesn't exist
+			return NULL;
+
+		if(prv == NULL){ // Its the first element
+			completed = (*ptr).next;
+			return ptr;
+		}
+
+		(*prv).next = (*ptr).next; // Otherwise
+		return ptr;
+}
 
 /* SCHEDULER FUNCTIONS */
 
@@ -141,13 +170,12 @@ tcbNode * checkQueue(tcbNode ** queue){
 	return nextProc;
 }
 
-/* __checkQueue()__
- *	Returns a pointer to the next runnable tcbNode in the given queue.
+/* __scheduler()__
+ *	Decides what to run next
  *	Args:
- *		- tcbNode ** queue - a pointer to q1, q2 or q3 (use &q1, &q2, &q3)
+ *		- signum - a int repreenting the signal that was set off
  *	Returns:
- *		- tcbNode * - the next runnable tcbNode in the given queue
- *		- NULL - if no runnable nodes exist
+ *		- N/A
  */
 void scheduler(int signum){
 	/* Set up sigmask */
@@ -218,6 +246,7 @@ void scheduler(int signum){
 	currCtxt = nextProc;	// Change the currCtxt pointer
 
 	/* Reset Timer */
+	struct itimerval timer;
 	timer.it_interval.tv_sec = 0;	// 0 seconds
   timer.it_interval.tv_usec = 0; // 0 milliseconds - NO REPEAT
   timer.it_value.tv_sec = 0; // 0 seconds
@@ -245,10 +274,7 @@ void scheduler(int signum){
 /* give CPU pocession to other user level threads voluntarily */
 int my_pthread_yield() {
 	/* Disable Timer */
-	struct itimerval timer;
-	timer.it_value.tv_sec = 0; // 0 seconds
-  timer.it_value.tv_usec = 0; // 0 milliseconds
-	setitimer(WHICH, &timer, NULL); // CANCEL TIMER
+	disableTimer();
 
 	// Set status to yield - BUT ONLY IF IT WAS RUNNING, not waiting
 	if((*currCtxt).data.stat == P_RUN)
@@ -261,8 +287,13 @@ int my_pthread_yield() {
 
 /* create a new thread */
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg) {
+	disableTimer();
+
 	if(currCtxt == NULL) { // First time any my_pthread function has been evoked (so store main)
-		signal (T_SIG, scheduler);
+		struct sigaction sigAct;
+		sigAct.sa_handler = scheduler;
+		sigAct.sa_flags = 0;
+		sigaction(T_SIG, &sigAct, NULL);
 
 		currCtxt = malloc(sizeof(tcbNode));
 		if(currCtxt == NULL){
@@ -299,6 +330,8 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 	(*newNode).data.w_mutex = NULL;
 	(*newNode).data.w_tID = 0;
 
+	*thread = (*newNode).data.tID; // Give tID back to user
+
 	//Create ucontext
 	getcontext(&(*newNode).data.ctxt);
 	(*newNode).data.ctxt.uc_link = 0;
@@ -317,12 +350,12 @@ int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr, void *(*func
 	enqueue(&q1, newNode);
 
 	my_pthread_yield();
-
 	return 0;
 };
 
 /* terminate a thread */
 void my_pthread_exit(void * value_ptr) {
+	disableTimer();
 	(*currCtxt).data.stat = P_EXIT; // Set to exit status
 	(*currCtxt).data.ret = value_ptr; // Point to the return value
 	my_pthread_yield(); // Release control
@@ -331,6 +364,23 @@ void my_pthread_exit(void * value_ptr) {
 /* wait for thread termination */
 int my_pthread_join(my_pthread_t thread, void **value_ptr) {
 	//Here, you'll free the ss_sp within uc_stack
+	disableTimer();
+
+	tcbNode * joinable = getExitThread(thread); // Attempt to find it
+
+	if(joinable == NULL) {
+		(*currCtxt).data.w_tID = thread; // give it the tid of the thread its waiting on
+		(*currCtxt).data.stat = P_WAIT_T; // Set to wait_t status
+
+		my_pthread_yield(); // Release control
+
+		joinable = getExitThread(thread); // For when it's rescheduled
+	}
+
+	(*value_ptr) = (*joinable).data.ret; // Get return value
+	free(joinable); // Free the allocated space
+
+	//dequipMask(); // Take down sigprocmask
 	return 0;
 };
 

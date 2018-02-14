@@ -2,44 +2,46 @@
 #include <stdio.h>
 #include "my_pthread_t.h"
 
-void handlr(int signum){
-  swap(0);
+void * f1(void * i){
+  int * iptr = (int *) i;
+  *iptr += 1;
+  my_pthread_exit(NULL);
 }
 
-int swap(int x){
-  tcbNode * mainTCB = currCtxt;
-  tcbNode * ptr = (*q1).next;
-
-  if(x == 0)
-		swapcontext(&(*mainTCB).data.ctxt, &(*ptr).data.ctxt);
-	if(x == 1)
-		swapcontext(&(*ptr).data.ctxt, &(*mainTCB).data.ctxt);
-	if(x == 2)
-		setcontext(&(*mainTCB).data.ctxt);
-
-	return 0;
+void * f2(void * i){
+  int * iptr = (int *) i;
+  *iptr += 2;
+  my_pthread_exit(NULL);
 }
 
-void * funct(void * x) {
-  int * y = x;
-  *y += 12;
-  swap(2);
+void * f3(void * i){
+  int * iptr = (int *) i;
+  *iptr += 3;
+  my_pthread_exit(NULL);
 }
 
 void main(int argc, char ** argv){
-	signal(SIGALRM, handlr);
+  my_pthread_t t1, t2, t3, t4, t5;
+  void * (*f1ptr)(void *) = f1;
+  void * (*f2ptr)(void *) = f2;
+  void * (*f3ptr)(void *) = f3;
 
-	my_pthread_t t1, t2, t3;
-  int i = 0;
-  void * (*fptr)(void *) = funct;
+  int i1 = 0, i2 = 0, i3 = 0, i4 = 0, i5 = 0;
 
-  my_pthread_create(&t1, NULL, fptr, &i);
-  my_pthread_create(&t2, NULL, fptr, &i);
-  my_pthread_create(&t3, NULL, fptr, &i);
+  my_pthread_create(&t1, NULL, f1ptr, &i1);
+  my_pthread_create(&t2, NULL, f2ptr, &i2);
+  my_pthread_create(&t3, NULL, f3ptr, &i3);
+  my_pthread_create(&t4, NULL, f1ptr, &i4);
+  my_pthread_create(&t5, NULL, f2ptr, &i5);
 
-  raise(SIGALRM);
-	raise(SIGALRM);
+  void * ret;
 
-  printf("Res: %d\n", i);
+  my_pthread_join(t1, &ret);
+  my_pthread_join(t2, &ret);
+  my_pthread_join(t3, &ret);
+  my_pthread_join(t4, &ret);
+  my_pthread_join(t5, &ret);
 
+  printf("Complete.\n");
+  printf("i1: %d, i2: %d, i3: %d, i4: %d, i5: %d\n", i1, i2, i3, i4, i5);
 }

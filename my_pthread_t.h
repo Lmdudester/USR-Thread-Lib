@@ -2,8 +2,8 @@
 // Author:	Yujie REN
 // Date:	09/23/2017
 
-// name: 							Liam Davies,	Kevin Lee
-// username of iLab: 	lmd312,				kjl156
+// name: Liam Davies, Kevin Lee, Brian Ellsworth
+// username of iLab: lmd312, kjl156, bje40
 // iLab Server: factory
 
 #ifndef MY_PTHREAD_T_H
@@ -20,11 +20,23 @@
 #include <ucontext.h>
 #include <sys/time.h>
 
-#define P_RUN 0
-#define P_YIELD 1
-#define P_WAIT_M 2
-#define P_WAIT_T 3
-#define P_EXIT 4
+#define pthread_create my_pthread_create
+#define pthread_yield my_pthread_yield
+#define thread_exit my_pthread_exit
+#define pthread_join my_pthread_join
+#define pthread_mutex_init my_pthread_mutex_init
+#define pthread_mutex_lock my_pthread_mutex_lock
+#define pthread_mutex_unlock my_pthread_mutex_unlock
+#define pthread_mutex_destroy my_pthread_mutex_destroy
+
+typedef enum State_
+{
+	P_RUN, 
+	P_YIELD, 
+	P_WAIT_M, 
+	P_WAIT_T, 
+	P_EXIT
+} State;
 
 #define WHICH ITIMER_REAL
 #define	T_SIG SIGALRM
@@ -56,7 +68,7 @@ typedef struct threadControlBlock {
   my_pthread_mutex_t * w_mutex; // The mutex this thread is waiting on
   my_pthread_t w_tID; // The tid of the thread that this thread is waiting on (NOTE: 0 if none)
   int qNum; // The number of the prev queue this thread was in
-  int stat; // Current status of the thread
+  State stat; // Current status of the thread
   void * ret; // Pointer to return value
 } tcb;
 

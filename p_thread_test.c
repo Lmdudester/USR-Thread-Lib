@@ -2,6 +2,24 @@
 #include <stdio.h>
 #include "my_pthread_t.h"
 
+#define TEST1
+//#define TEST2
+//#define TEST3
+//#define TEST4
+
+/*here so the code will compile with no test cases define*/
+#if !defined(TEST1)&&!defined(TEST2)&&!defined(TEST3)
+void main(int argc, char *argv[])
+{
+	return; 
+}
+#endif 
+
+/*TEST1 tests the following: 
+ * my_pthread_t 
+ * my_pthread_exit
+*/ 
+#ifdef TEST1
 void * f1(void * i){
   int * iptr = (int *) i;
   *iptr += 1;
@@ -45,3 +63,11 @@ void main(int argc, char ** argv){
   printf("Complete.\n");
   printf("i1: %d, i2: %d, i3: %d, i4: %d, i5: %d\n", i1, i2, i3, i4, i5);
 }
+#endif 
+
+#ifdef TEST2
+
+#endif
+
+
+

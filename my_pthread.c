@@ -2,8 +2,8 @@
 // Author:	Yujie REN
 // Date:	09/23/2017
 
-// name: 							Liam Davies,	Kevin Lee
-// username of iLab: 	lmd312,				kjl156
+// name: Liam Davies, Kevin Lee, Brian Ellsworth
+// username of iLab: lmd312, kjl156, bje40
 // iLab Server: factory
 
 #include "my_pthread_t.h"

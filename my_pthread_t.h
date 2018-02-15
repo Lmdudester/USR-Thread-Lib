@@ -31,10 +31,10 @@
 
 typedef enum State_
 {
-	P_RUN, 
-	P_YIELD, 
-	P_WAIT_M, 
-	P_WAIT_T, 
+	P_RUN,
+	P_YIELD,
+	P_WAIT_M,
+	P_WAIT_T,
 	P_EXIT
 } State;
 
@@ -52,14 +52,9 @@ typedef uint my_pthread_t;
 
 // mutex struct definition
 typedef struct my_pthread_mutex_t {
-	int lock;
+	int lock; // 0 - unlocked, 1 - locked, -1 - destroyed
+	my_pthread_t tID; // thread that last locked
 } my_pthread_mutex_t;
-
-// mutex node definition
-typedef struct my_pthread_mutex_t_Node {
-	my_pthread_mutex_t lock;
-  struct my_pthread_mutex_t_Node * next;
-} my_pthread_mutex_t_Node;
 
 // tcb struct definition
 typedef struct threadControlBlock {

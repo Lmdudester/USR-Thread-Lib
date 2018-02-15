@@ -388,20 +388,94 @@ int my_pthread_join(my_pthread_t thread, void **value_ptr) {
 
 /* initial the mutex lock */
 int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
+	// PAUSE TIMER
+
+	if(mutex == NULL){
+		// ERROR
+		// RESUME TIMER
+		return -1;
+	}
+
+	(*mutex).lock = 0;
+	(*mutex).tID = 0;
+
+	// RESUME TIMER
 	return 0;
 };
 
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
+	// PAUSE TIMER
+
+	if((*mutex).lock == -1){
+		// ERROR - can't lock destroyed mutex
+		// RESUME TIMER
+		return -1;
+	}
+
+	if((*mutex).lock == 0){ // It can be locked
+		(*mutex).tID = (*currCtxt).data.tID;
+		(*mutex).lock = 1;
+
+		// RESUME TIMER
+
+	} else { // Must yield and try again
+		(*currCtxt).data.stat = P_WAIT_M;
+		(*currCtxt).data.w_mutex = mutex;
+
+		my_pthread_yield();
+
+		(*mutex).tID = (*currCtxt).data.tID;
+		(*mutex).lock = 1;
+	}
+
 	return 0;
 };
 
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
+	// PAUSE TIMER
+
+	if((*mutex).lock == -1){
+		// ERROR - can't unlock destroyed mutex
+		// RESUME TIMER
+		return -1;
+	}
+	if((*mutex).lock == 0){
+		// ERROR - can't unlock if unlocked
+		// RESUME TIMER
+		return -1;
+	}
+
+	if((*mutex).tID == (*currCtxt).data.tID){
+		(*mutex).lock = 0;
+	} else {
+		// ERROR - can't unlock if not same thread
+		// RESUME TIMER
+		return -1;
+	}
+
+	// RESUME TIMER
 	return 0;
 };
 
 /* destroy the mutex */
 int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
+	// PAUSE TIMER
+
+	if(mutex == NULL){
+		// ERROR
+		// RESUME TIMER
+		return -1;
+	}
+	if((*mutex).lock == -1){
+		// ERROR - already destroyed
+		// RESUME TIMER
+		return -1;
+	}
+
+	(*mutex).lock = -1;
+
+	// RESUME TIMER
 	return 0;
 };

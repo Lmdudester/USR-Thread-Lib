@@ -28,11 +28,12 @@ int numMaintain = 0;
 
 /* HELPER FUNCTIONS */
 
-void disableTimer(){
-	struct itimerval timer;
+struct itimerval disableTimer(){
+	struct itimerval timer, ret;
 	timer.it_value.tv_sec = 0; // 0 seconds
   timer.it_value.tv_usec = 0; // 0 milliseconds
-	setitimer(WHICH, &timer, NULL); // CANCEL TIMER
+	setitimer(WHICH, &timer, &ret); // CANCEL TIMER
+	return ret;
 }
 
 /* __enqueue()__
@@ -148,16 +149,18 @@ tcbNode * checkQueue(tcbNode ** queue){
 				break;
 
 			case P_WAIT_M:
-				if(1 == 1) // If it's mutex is unclocked **EDIT LATER**
+				if((*((*testProc).data.w_mutex)).lock == 0) { // If it's mutex is unclocked
 					nextProc = testProc;
-				else
+					(*testProc).data.stat = P_RUN;
+				} else
 					enqueue(queue,testProc);
 				break;
 
 			case P_WAIT_T:
-				if(isThreadDone((*testProc).data.w_tID) == 1) // If the thread is complete
+				if(isThreadDone((*testProc).data.w_tID) == 1) { // If the thread is complete
 					nextProc = testProc;
-				else
+					(*testProc).data.stat = P_RUN;
+				} else
 					enqueue(queue,testProc);
 				break;
 
@@ -388,42 +391,60 @@ int my_pthread_join(my_pthread_t thread, void **value_ptr) {
 
 /* initial the mutex lock */
 int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
-	// PAUSE TIMER
+	struct itimerval res = disableTimer(); // PAUSE TIMER
 
 	if(mutex == NULL){
 		// ERROR
-		// RESUME TIMER
+		setitimer(WHICH, &res, NULL); // RESUME TIMER
 		return -1;
 	}
 
 	(*mutex).lock = 0;
 	(*mutex).tID = 0;
 
-	// RESUME TIMER
+	setitimer(WHICH, &res, NULL); // RESUME TIMER
 	return 0;
 };
 
 /* aquire the mutex lock */
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
-	// PAUSE TIMER
+	struct itimerval res = disableTimer(); // PAUSE TIMER
 
+	if(mutex == NULL){
+		// ERROR
+		setitimer(WHICH, &res, NULL); // RESUME TIMER
+		return -1;
+	}
 	if((*mutex).lock == -1){
 		// ERROR - can't lock destroyed mutex
-		// RESUME TIMER
+		setitimer(WHICH, &res, NULL); // RESUME TIMER
 		return -1;
 	}
 
 	if((*mutex).lock == 0){ // It can be locked
-		(*mutex).tID = (*currCtxt).data.tID;
+		if(currCtxt == NULL)
+			(*mutex).tID = idCount; // For 1-thread only situations
+		else
+			(*mutex).tID = (*currCtxt).data.tID;
 		(*mutex).lock = 1;
 
-		// RESUME TIMER
+		setitimer(WHICH, &res, NULL); // RESUME TIMER
 
 	} else { // Must yield and try again
+		if(currCtxt == NULL) {
+			// ERROR - can't double lock mutex (still 1 thread only - no timer/yield)
+			return -1;
+		}
+
 		(*currCtxt).data.stat = P_WAIT_M;
 		(*currCtxt).data.w_mutex = mutex;
 
 		my_pthread_yield();
+
+		if((*mutex).lock == -1){
+			// ERROR - can't lock destroyed mutex
+			return -1; // No timer change
+		}
 
 		(*mutex).tID = (*currCtxt).data.tID;
 		(*mutex).lock = 1;
@@ -434,48 +455,62 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 /* release the mutex lock */
 int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
-	// PAUSE TIMER
+	struct itimerval res = disableTimer(); // PAUSE TIMER
 
+	if(mutex == NULL){
+		// ERROR
+		setitimer(WHICH, &res, NULL); // RESUME TIMER
+		return -1;
+	}
 	if((*mutex).lock == -1){
 		// ERROR - can't unlock destroyed mutex
-		// RESUME TIMER
+		setitimer(WHICH, &res, NULL); // RESUME TIMER
 		return -1;
 	}
 	if((*mutex).lock == 0){
 		// ERROR - can't unlock if unlocked
-		// RESUME TIMER
+		setitimer(WHICH, &res, NULL); // RESUME TIMER
 		return -1;
 	}
 
-	if((*mutex).tID == (*currCtxt).data.tID){
+	if(currCtxt == NULL) { // For 1-thread only situations
+		(*mutex).lock = 0;
+	} else if((*mutex).tID == (*currCtxt).data.tID){ // Make sure tID matches
 		(*mutex).lock = 0;
 	} else {
 		// ERROR - can't unlock if not same thread
-		// RESUME TIMER
+		setitimer(WHICH, &res, NULL); // RESUME TIMER
 		return -1;
 	}
 
-	// RESUME TIMER
+	if(currCtxt != NULL) // Otherwise, only 1 thread so dont yield
+		my_pthread_yield();
+
 	return 0;
 };
 
 /* destroy the mutex */
 int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
-	// PAUSE TIMER
+	struct itimerval res = disableTimer(); // PAUSE TIMER
 
 	if(mutex == NULL){
 		// ERROR
-		// RESUME TIMER
+		setitimer(WHICH, &res, NULL); // RESUME TIMER
 		return -1;
 	}
 	if((*mutex).lock == -1){
 		// ERROR - already destroyed
-		// RESUME TIMER
+		setitimer(WHICH, &res, NULL); // RESUME TIMER
+		return -1;
+	}
+	if((*mutex).lock == 1){
+		// ERROR - can't destroy a locked mutex
+		setitimer(WHICH, &res, NULL); // RESUME TIMER
 		return -1;
 	}
 
 	(*mutex).lock = -1;
 
-	// RESUME TIMER
+	setitimer(WHICH, &res, NULL); // RESUME TIMER
 	return 0;
 };

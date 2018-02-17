@@ -50,6 +50,11 @@ typedef enum State_
 
 typedef uint my_pthread_t;
 
+typedef union voidToint {
+   int i;
+   void * ptr;
+} vToi;
+
 // mutex struct definition
 typedef struct my_pthread_mutex_t {
 	int lock; // 0 - unlocked, 1 - locked, -1 - destroyed

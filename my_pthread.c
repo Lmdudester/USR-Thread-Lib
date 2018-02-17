@@ -137,8 +137,11 @@ tcbNode * checkQueue(tcbNode ** queue){
 	while(nextProc == NULL){
 		tcbNode * testProc = dequeue(queue);
 
-		if(front == testProc && runs != 0) // Cycled through the queue
+		if(front == testProc && runs != 0) { // Cycled through the queue
+			(*testProc).next = *queue;
+			*queue = testProc;
 			break;
+		}
 
 		if(testProc == NULL) // Nothing in queue
 			break;

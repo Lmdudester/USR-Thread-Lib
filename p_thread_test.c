@@ -6,17 +6,14 @@
 // #define TEST1
 // #define TEST2
 // #define TEST3
-//#define TEST4
+// #define TEST4
+#define TEST5
 
-/* TESTING MY_PTHREAD_CREATE */
-// #define KEV1 //I mean, ok it works...
-#define KEV2
-
-/*TEST1 tests the following:
- * my_pthread_t
- * my_pthread_exit
-*/
-#ifdef TEST1
+/* TEST1 tests the following:
+ * - my_pthread_t
+ * - my_pthread_exit
+ */
+#ifdef TEST1	//	Liam
 	void * f1(void * i){
 	  int * iptr = (int *) i;
 	  *iptr += 1;
@@ -62,7 +59,11 @@
 	}
 #endif
 
-#ifdef TEST2
+/* TEST2 tests the following:
+ * - argument passing
+ * - basic locks
+ */
+#ifdef TEST2	//	Liam
 	typedef struct largerData {
 		int d1;
 		int d2;
@@ -151,117 +152,156 @@
 	}
 #endif
 
+#ifdef TEST3	//	Kevin
+	void *simplePrint(void *param) {
+	    printf("HERE\n");
 
+	    my_pthread_exit(NULL);
+	    return NULL;
+	}
 
+	void main(int argc, char ** argv){
+	    my_pthread_t tid1, tid2;
+	    printf("Starting\n");
+	    void * (*spPtr)(void *) = simplePrint;
 
+	    my_pthread_create(&tid1, NULL, spPtr, NULL);
+	    my_pthread_create(&tid2, NULL, spPtr, NULL);
 
+	    //Wait for both threads to finish:3
+	    void *ret;
+	    my_pthread_join(tid1, &ret);
+	    my_pthread_join(tid2, &ret);
 
-
-
-
-
-// Kevin's Test Area...
-#ifdef KEV1
-void *simplePrint(void *param) {
-    printf("HERE\n");
-
-    my_pthread_exit(NULL);
-    return NULL;
-}
-
-void main(int argc, char ** argv){
-    my_pthread_t tid1, tid2;
-    printf("Starting\n");
-    void * (*spPtr)(void *) = simplePrint;
-
-    my_pthread_create(&tid1, NULL, spPtr, NULL);
-    my_pthread_create(&tid2, NULL, spPtr, NULL);
-
-    //Wait for both threads to finish:3
-    void *ret;
-    my_pthread_join(tid1, &ret);
-    my_pthread_join(tid2, &ret);
-
-    printf("Ending\n");
-}
+	    printf("Ending\n");
+	}
 #endif
 
+#ifdef TEST4	//	Kevin
+	my_pthread_mutex_t lock;
+	int sum;
 
+	void *add2(void *param) {
+	    printf("In the add method #2\n");
 
+			my_pthread_mutex_lock(&lock);
+	    int i;
+	    for (i = 0; i < 10000000; i++) {
+	      sum = sum + 1;
+	    }
+	    my_pthread_mutex_unlock(&lock);
 
+	    printf("sum #2:%d\n",sum);
 
+	    printf("exited #2\n");
 
-#ifdef KEV2
+	    my_pthread_exit(NULL);
+	    return NULL;
+	}
 
-my_pthread_mutex_t lock;
-int sum;
+	void *add1(void *param) {
+	    printf("In the add method #1\n");
 
-void *add2(void *param) {
-    printf("In the add method #2\n");
+			my_pthread_mutex_lock(&lock);
+	    int i;
+	    for (i = 0; i < 10000000; i++) {
+	      sum = sum + 1;
+	    }
+	    my_pthread_mutex_unlock(&lock);
 
-		my_pthread_mutex_lock(&lock);
-    int i;
-    for (i = 0; i < 10000000; i++) {
-      sum = sum + 1;
-    }
-    my_pthread_mutex_unlock(&lock);
+	    printf("sum #1:%d\n",sum);
 
-    printf("sum #2:%d\n",sum);
+	    printf("exited #1\n");
 
-    printf("exited #2\n");
+	    my_pthread_exit(NULL);
+	    return NULL;
+	}
 
-    my_pthread_exit(NULL);
-    return NULL;
-}
+	void main(int argc, char ** argv){
+	    my_pthread_t tid1, tid2;
 
-void *add1(void *param) {
-    printf("In the add method #1\n");
+	    my_pthread_mutex_init(&lock, NULL);
 
-		my_pthread_mutex_lock(&lock);
-    int i;
-    for (i = 0; i < 10000000; i++) {
-      sum = sum + 1;
-    }
-    my_pthread_mutex_unlock(&lock);
+	    printf("Starting\n");
+	    // void * (*ptr1)(void *) = add1;
+	    // void * (*ptr2)(void *) = add2;
 
-    printf("sum #1:%d\n",sum);
+	    my_pthread_create(&tid1, NULL, add1, NULL);
+	    my_pthread_create(&tid2, NULL, add2, NULL);
 
-    printf("exited #1\n");
+	    void *ret;
+	    my_pthread_join(tid1, &ret);
+	    my_pthread_join(tid2, &ret);
 
-    my_pthread_exit(NULL);
-    return NULL;
-}
+	    my_pthread_mutex_destroy(&lock);
 
-void main(int argc, char ** argv){
-    my_pthread_t tid1, tid2;
+	    printf("Ended, %d\n",sum);
+	}
 
-    my_pthread_mutex_init(&lock, NULL);
+	/* Needs to print out (or some variation of)
+	Starting
+	In the add method #1
+	In the add method #2
+	sum #1:m
+	exited #1
+	sum #2:20000000
+	exited #2
+	Ended, 20000000
+	*/
+#endif
 
-    printf("Starting\n");
-    // void * (*ptr1)(void *) = add1;
-    // void * (*ptr2)(void *) = add2;
+/* TEST5 tests the following:
+ * - return value passing
+ * - nested thread creation
+ */
+#ifdef TEST5	//	Liam
+	typedef struct data_test {
+		int d1;
+		int d2;
+	} data;
 
-    my_pthread_create(&tid1, NULL, add1, NULL);
-    my_pthread_create(&tid2, NULL, add2, NULL);
+	void * createe(void * i) {
+		printf("createe begins.\n");
 
-    void *ret;
-    my_pthread_join(tid1, &ret);
-    my_pthread_join(tid2, &ret);
+		printf("createe creates ret struct.\n");
+		data * ret = malloc(sizeof(data));
+		(*ret).d1 = 5;
+		(*ret).d2 = 20;
 
-    my_pthread_mutex_destroy(&lock);
+		printf("createe ends.\n");
+		my_pthread_exit(ret);
+		return NULL;
+	}
 
-    printf("Ended, %d\n",sum);
-}
+	void * t_creater(void * i) {
+		printf("t_creater begins.\n");
+		my_pthread_t t2;
 
-/* Needs to print out (or some variation of)
-Starting
-In the add method #1
-In the add method #2
-sum #1:m
-exited #1
-sum #2:20000000
-exited #2
-Ended, 20000000
-*/
+		printf("t_creater creates createe.\n");
+		my_pthread_create(&t2, NULL, createe, NULL);
 
+		void *ret;
+		printf("t_creater joining on createe\n");
+		my_pthread_join(t2, &ret);
+
+		printf("t_creater ends.\n");
+		my_pthread_exit(ret);
+		return NULL;
+	}
+
+	void main(int argc, char ** argv) {
+		printf("Main begins.\n");
+		my_pthread_t t1;
+
+		printf("Main creates t_creater.\n");
+		my_pthread_create(&t1, NULL, t_creater, NULL);
+
+		void * r;
+		printf("Main joining on t_creater\n");
+		my_pthread_join(t1, &r);
+
+		data * ret = r;
+
+		printf("Main ends, ret values -> d1 = %d, d2 = %d.\n", (*ret).d1, (*ret).d2);
+	}
 #endif

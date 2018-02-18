@@ -16,5 +16,8 @@ my_pthread.o: my_pthread_t.h
 tester: my_pthread.o
 	$(CC) p_thread_test.c my_pthread.o
 
+%: %.c my_pthread.o
+	$(CC) my_pthread.o $< -o $@
+
 clean:
 	rm -rf testfile *.o *.a *.out

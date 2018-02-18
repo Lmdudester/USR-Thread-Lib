@@ -190,6 +190,9 @@ void scheduler(int signum){
 	sigaddset(&toBlock, T_SIG);
 	sigprocmask(SIG_BLOCK, &toBlock, NULL);
 
+	if((*currCtxt).data.stat == P_EXIT) // TO PREVENT RUNNING TO COMPLETION ERROR
+			enqueue(&completed, currCtxt);
+
 	/* Choose next ctxt */
 	tcbNode * nextProc = checkQueue(&q1); // Queue 1
 	if(nextProc == NULL)
@@ -199,8 +202,11 @@ void scheduler(int signum){
 
 	if(nextProc == NULL) { // Then currCtxt is the only possible context, so let it continue
 		numMaintain++;			 // NOTE: No timer set since nothing can run until a yield anyway
+		//printf("C: %d -> NULL (q1 - %d, q2 - %d, q3 - %d, exit - %d)\n", (*currCtxt).data.tID, q1, q2, q3, completed);
 		return;
 	}
+
+	//printf("C: %d -> %d (q1 - %d, q2 - %d, q3 - %d, exit - %d) \n", (*currCtxt).data.tID, (*nextProc).data.tID,  q1, q2, q3, completed);
 
 	/* Decide which queue to send current cTxt to */
 	switch((*currCtxt).data.stat){
@@ -225,11 +231,6 @@ void scheduler(int signum){
 			else // Was in q3
 				enqueue(&q3, currCtxt);
 			break;
-
-		case P_EXIT:
-			enqueue(&completed, currCtxt);
-			break;
-
 	}
 
 	/* Maintenance */

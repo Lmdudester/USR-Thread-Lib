@@ -6,10 +6,10 @@
 // #define TEST1
 // #define TEST2
 // #define TEST3
-// #define TEST4 //Doesn't print out at the very end
+// #define TEST4
 // #define TEST5
-// #define TEST6 //Doesn't print out at the very end
-#define TEST7 //Doesn't print out at the very end
+// #define TEST6
+#define TEST7
 
 
 /* TEST1 tests the following:
@@ -309,122 +309,119 @@
 	}
 #endif
 
+#ifdef TEST6 // Kevin
+	my_pthread_mutex_t lock;
+	int sum = 0;
 
-#ifdef TEST6
+	void *add2(void *param) {
+	    printf("In the add method 2\n");
 
-my_pthread_mutex_t lock;
-int sum = 0;
+			my_pthread_mutex_lock(&lock);
+			sum += *(int *)param;
+			my_pthread_mutex_unlock(&lock);
 
-void *add2(void *param) {
-    printf("In the add method 2\n");
+	    printf("sum #2:%d\n",sum);
+	    printf("exited #2\n");
 
-		my_pthread_mutex_lock(&lock);
-		sum += *(int *)param;
-		my_pthread_mutex_unlock(&lock);
+	    my_pthread_exit(NULL);
+	    return NULL;
+	}
 
-    printf("sum #2:%d\n",sum);
-    printf("exited #2\n");
+	void *add1(void *param) {
+	    printf("In the add method 1\n");
 
-    my_pthread_exit(NULL);
-    return NULL;
-}
+			my_pthread_mutex_lock(&lock);
+			sum += *(int *)param;
+			my_pthread_mutex_unlock(&lock);
 
-void *add1(void *param) {
-    printf("In the add method 1\n");
+	    printf("sum #1:%d\n",sum);
+	    printf("exited #1\n");
 
-		my_pthread_mutex_lock(&lock);
-		sum += *(int *)param;
-		my_pthread_mutex_unlock(&lock);
+	    my_pthread_exit(NULL);
+	    return NULL;
+	}
 
-    printf("sum #1:%d\n",sum);
-    printf("exited #1\n");
+	void main(int argc, char ** argv){
+	    my_pthread_t tid1, tid2, tid3;
 
-    my_pthread_exit(NULL);
-    return NULL;
-}
+	    my_pthread_mutex_init(&lock, NULL);
 
-void main(int argc, char ** argv){
-    my_pthread_t tid1, tid2, tid3;
+	    printf("Starting\n");
 
-    my_pthread_mutex_init(&lock, NULL);
+			int x = 4;
 
-    printf("Starting\n");
+	    my_pthread_create(&tid1, NULL, add1, &x);
+			my_pthread_create(&tid2, NULL, add2, &x);
 
-		int x = 4;
+	    void *ret;
+	    my_pthread_join(tid1, &ret);
+			my_pthread_join(tid2, &ret);
+			printf("Here?");
 
-    my_pthread_create(&tid1, NULL, add1, &x);
-		my_pthread_create(&tid2, NULL, add2, &x);
+	    my_pthread_mutex_destroy(&lock);
 
-    void *ret;
-    my_pthread_join(tid1, &ret);
-		my_pthread_join(tid2, &ret);
-		printf("Here?");
-
-    my_pthread_mutex_destroy(&lock);
-
-		printf("Done...");
-    printf("Ended, %d\n",sum);
-}
-
+			printf("Done...\n");
+	    printf("Ended, %d\n",sum);
+	}
 #endif
 
-#ifdef TEST7
-int data = 0;
-int limit = 3;
-my_pthread_mutex_t lock;
+#ifdef TEST7 // Kevin
+	int data = 0;
+	int limit = 1000;
+	my_pthread_mutex_t lock;
 
-void *print(void *param) {
-	printf("Thread Num - %d\n",*(int *)param);
-	int x = 0;
-	my_pthread_mutex_lock(&lock);
-	for(x = 0; x < limit; x++){
-		data ++;
+	void *print(void *param) {
+		printf("Thread Num - %d\n",*(int *)param);
+		int x = 0;
+		my_pthread_mutex_lock(&lock);
+		for(x = 0; x < limit; x++){
+			data ++;
+		}
+		my_pthread_mutex_unlock(&lock);
+
+		my_pthread_exit(NULL);
+		return NULL;
 	}
-	my_pthread_mutex_unlock(&lock);
 
-	my_pthread_exit(NULL);
-	return NULL;
-}
+	void main(int argc, char ** argv){
+		my_pthread_t tid0, tid1, tid2, tid3, tid4, tid5, tid6, tid7, tid8, tid9, tid10, tid11, tid12, tid13;
 
-void main(int argc, char ** argv){
-	my_pthread_t tid0, tid1, tid2, tid3, tid4, tid5, tid6, tid7, tid8, tid9, tid10, tid11, tid12, tid13;
+		// my_pthread_mutex_init(&lock, NULL);
 
-	// my_pthread_mutex_init(&lock, NULL);
+		my_pthread_create(&tid0, NULL, print, &data);
+		my_pthread_create(&tid1, NULL, print, &data);
+		my_pthread_create(&tid2, NULL, print, &data);
+		my_pthread_create(&tid3, NULL, print, &data);
+		my_pthread_create(&tid4, NULL, print, &data);
+		my_pthread_create(&tid5, NULL, print, &data);
+		my_pthread_create(&tid6, NULL, print, &data);
+		my_pthread_create(&tid7, NULL, print, &data);
+		my_pthread_create(&tid8, NULL, print, &data);
+		my_pthread_create(&tid9, NULL, print, &data);
+		my_pthread_create(&tid10, NULL, print, &data);
+		my_pthread_create(&tid11, NULL, print, &data);
+		my_pthread_create(&tid12, NULL, print, &data);
+		my_pthread_create(&tid13, NULL, print, &data);
 
-	my_pthread_create(&tid0, NULL, print, &data);
-	my_pthread_create(&tid1, NULL, print, &data);
-	my_pthread_create(&tid2, NULL, print, &data);
-	my_pthread_create(&tid3, NULL, print, &data);
-	my_pthread_create(&tid4, NULL, print, &data);
-	my_pthread_create(&tid5, NULL, print, &data);
-	my_pthread_create(&tid6, NULL, print, &data);
-	my_pthread_create(&tid7, NULL, print, &data);
-	my_pthread_create(&tid8, NULL, print, &data);
-	my_pthread_create(&tid9, NULL, print, &data);
-	my_pthread_create(&tid10, NULL, print, &data);
-	my_pthread_create(&tid11, NULL, print, &data);
-	my_pthread_create(&tid12, NULL, print, &data);
-	my_pthread_create(&tid13, NULL, print, &data);
+		void * ret;
 
-	void * ret;
+		my_pthread_join(tid0, &ret);
+		my_pthread_join(tid1, &ret);
+		my_pthread_join(tid2, &ret);
+		my_pthread_join(tid3, &ret);
+		my_pthread_join(tid4, &ret);
+		my_pthread_join(tid5, &ret);
+		my_pthread_join(tid6, &ret);
+		my_pthread_join(tid7, &ret);
+		my_pthread_join(tid8, &ret);
+		my_pthread_join(tid9, &ret);
+		my_pthread_join(tid10, &ret);
+		my_pthread_join(tid11, &ret);
+		my_pthread_join(tid12, &ret);
+		my_pthread_join(tid13, &ret);
 
-	my_pthread_join(tid0, &ret);
-	my_pthread_join(tid1, &ret);
-	my_pthread_join(tid2, &ret);
-	my_pthread_join(tid3, &ret);
-	my_pthread_join(tid4, &ret);
-	my_pthread_join(tid5, &ret);
-	my_pthread_join(tid6, &ret);
-	my_pthread_join(tid7, &ret);
-	my_pthread_join(tid8, &ret);
-	my_pthread_join(tid9, &ret);
-	my_pthread_join(tid10, &ret);
-	my_pthread_join(tid11, &ret);
-	my_pthread_join(tid12, &ret);
-	my_pthread_join(tid13, &ret);
+		my_pthread_mutex_destroy(&lock);
 
-	my_pthread_mutex_destroy(&lock);
-
-	printf("Can you hear me?\n");
-}
+		printf("Can you hear me?\n");
+	}
 #endif

@@ -20,7 +20,7 @@
 #include <ucontext.h>
 #include <sys/time.h>
 
-#define USE_MY_PTHREAD //(comment it if you want to use real pthread)
+#define USE_MY_PTHREAD //(comment this line if you want to use real pthread)
 
 #ifdef USE_MY_PTHREAD
 #define pthread_t my_pthread_t

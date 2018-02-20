@@ -6,7 +6,7 @@ RANLIB = ranlib
 
 Target: my_pthread.a
 
-all: Test1 Test2 Test3 Test4 Test5 Test6 Test7
+all: Test1 Test2 Test3 Test4 Test5 Test6 Test7 Test8
 
 my_pthread.a: my_pthread.o
 	$(AR) libmy_pthread.a my_pthread.o
@@ -40,7 +40,7 @@ Test7: ./Tests/Test7.c my_pthread.a
 	$(CC) ./Tests/Test7.c -L. $(LDFLAGS) -o Test7
 
 Test8: ./Tests/Test8.c my_pthread.a
-	$(CC) ./Tests/Test8.c -L. $(LDFLAGS) -o Test8 
+	$(CC) ./Tests/Test8.c -L. $(LDFLAGS) -o Test8
 
 #compile any individual arbitrary test
 #%: Tests/%.c my_pthread.a

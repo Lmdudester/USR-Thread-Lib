@@ -22,7 +22,7 @@ void *print(void *param) {
 void main(int argc, char ** argv) {
 	pthread_t tid0, tid1, tid2, tid3, tid4, tid5, tid6, tid7, tid8, tid9, tid10, tid11, tid12, tid13;
 
-	// pthread_mutex_init(&lock, NULL);
+	pthread_mutex_init(&lock, NULL);
 
 	pthread_create(&tid0, NULL, print, &data);
 	pthread_create(&tid1, NULL, print, &data);

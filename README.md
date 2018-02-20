@@ -9,7 +9,7 @@ Our scheduler implements a Multi-Level Feedback Queue that uses a maintenance cy
 There are three queues that we've used. Queue1, Queue2, and Queue3. These queues each have different priorities as well as different time quanta.
 Queue 1 will have the highest priority, and Queue 3 will have the lowest priority. This can be seen in the picture below.
 
-![alt text](https://github.com/Lmdudester/USR-Thread-Lib/blob/master/planning/MLPQ%20Graph.png)
+![alt text](https://i.imgur.com/iKXzcNG.png)
 
 So when dealing with previously running processes, we'll check what queue and status the thread has and decide where it will go based on those parameters.
 As well as having different priorities, these queues have different time slices. Queue 1 has 25 MSECS, Queue 2 has 50 MSECS, and Queue 3 has 100 MSECS. We chose the numbers of
